@@ -1,66 +1,77 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import "./App.css";
-import { io } from "socket.io-client";
-
-const socket = io("http://127.0.0.1:8000");
+import Cookies from "js-cookie";
 function App() {
-  const [msg, setMsg] = useState([]);
-  const [text, setText] = useState("");
-  const scrollRef = useRef(null);
-  const userId = "68b8815f2c4280c48c87d91f";
+  return (
+    <div className=" h-screen w-screen flex  justify-center items-center">
+      <Login />
+    </div>
+  );
+}
 
-  const socketIp = "http://127.0.0.1:8000";
+function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  useEffect(() => {
-    const fetchMsg = async () => {
-      try {
-        const res = await fetch("http://127.0.0.1:8000/api/v1/messages");
-        const result = await res.json();
-        setMsg(result.data.messages);
-      } catch (err) {
-        console.log(err);
-      }
-    };
-
-    fetchMsg();
-
-    socket.on("receiveMessage", (text) => {
-      setMsg((prev) => [...prev, text]);
-    });
-    return () => {
-      socket.off("receiveMessage");
-    };
-  }, []);
-
-  useEffect(() => {
-    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  });
-
-  const handleTextChange = (e) => {
-    setText(e.target.value);
+  const handleEmailChange = (e) => {
+    setEmail(e.target.value);
+  };
+  const handlePasswordChange = (e) => {
+    setPassword(e.target.value);
   };
 
-  const sentMsg = () => {
-    if (text.trim()) socket.emit("sendMessage", text, userId);
-    setText("");
+  const onLogin = async () => {
+    console.log(email, password);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/v1/users/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert("Login Successful");
+        Cookies.set("jwt", data.token, { expires: 1 });
+      } else {
+        console.log("Login failed: ", data.message);
+      }
+
+      setEmail("");
+      setPassword("");
+    } catch (err) {
+      console.log(err.message);
+    }
   };
 
   return (
-    <div>
-      <div class="msgBox" ref={scrollRef}>
-        {msg.map((el, i) => (
-          <div key={i}>
-            <p>{el.text}</p>
-          </div>
-        ))}
-      </div>
+    <div className="flex flex-col h-80 w-1/3 border border-black justify-center items-center rounded-xl ">
       <input
-        class="inputBox"
-        value={text}
+        className="border border-black h-10 w-5/6 rounded-lg m-2 p-2"
         type="text"
-        onChange={handleTextChange}
+        onChange={handleEmailChange}
+        value={email}
       ></input>
-      <button onClick={sentMsg}>Sent</button>
+      <input
+        className="border border-black h-10 w-5/6 rounded-lg m-2 p-2"
+        type="password"
+        onChange={handlePasswordChange}
+        value={password}
+      ></input>
+
+      <button
+        className="border border-black w-1/4 m-2 h-10 rounded-lg"
+        onClick={onLogin}
+      >
+        Login
+      </button>
     </div>
   );
 }
