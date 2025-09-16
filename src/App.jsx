@@ -1,79 +1,38 @@
 import { useState } from "react";
 import "./App.css";
-import Cookies from "js-cookie";
+
+import {
+  Navigate,
+  Route,
+  BrowserRouter as Router,
+  Routes,
+  useNavigate,
+} from "react-router-dom";
+import ProtectedRoute from "./util/ProtectedRoute";
+import isTokenValid from "./util/isTokenValid";
+import Login from "./Login/LoginPage";
+import Home from "./Home/HomePage";
+
 function App() {
   return (
-    <div className=" h-screen w-screen flex  justify-center items-center">
-      <Login />
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<RedirectLogin />} />
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </Router>
   );
 }
 
-function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  const handleEmailChange = (e) => {
-    setEmail(e.target.value);
-  };
-  const handlePasswordChange = (e) => {
-    setPassword(e.target.value);
-  };
-
-  const onLogin = async () => {
-    console.log(email, password);
-
-    try {
-      const response = await fetch("http://127.0.0.1:8000/api/v1/users/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        alert("Login Successful");
-        Cookies.set("jwt", data.token, { expires: 1 });
-      } else {
-        console.log("Login failed: ", data.message);
-      }
-
-      setEmail("");
-      setPassword("");
-    } catch (err) {
-      console.log(err.message);
-    }
-  };
-
-  return (
-    <div className="flex flex-col h-80 w-1/3 border border-black justify-center items-center rounded-xl ">
-      <input
-        className="border border-black h-10 w-5/6 rounded-lg m-2 p-2"
-        type="text"
-        onChange={handleEmailChange}
-        value={email}
-      ></input>
-      <input
-        className="border border-black h-10 w-5/6 rounded-lg m-2 p-2"
-        type="password"
-        onChange={handlePasswordChange}
-        value={password}
-      ></input>
-
-      <button
-        className="border border-black w-1/4 m-2 h-10 rounded-lg"
-        onClick={onLogin}
-      >
-        Login
-      </button>
-    </div>
-  );
+function RedirectLogin() {
+  return isTokenValid() ? <Navigate to="/home" replace /> : <Login />;
 }
 
 export default App;
