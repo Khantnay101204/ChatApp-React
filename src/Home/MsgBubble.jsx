@@ -1,23 +1,52 @@
 import dayjs from "dayjs";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import socket from "../SocketConfig";
 
-function MsgBubble({ msg, userID }) {
+function MsgBubble({ msgObj, userID, setMessages }) {
   const [showMenu, setShowMenu] = useState(false);
-  const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
+  const [isEdit, setIsEdit] = useState(false);
+  const [editMsg, setEditMsg] = useState(msgObj.decryptedMessage);
   const handleContextMenu = (e) => {
     e.preventDefault();
-    setMenuPos({ x: e.clientX, y: e.clientY });
     setShowMenu(true);
+  };
+
+  useEffect(() => {
+    socket.on("message_edited", (data) => {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === data.id
+            ? {
+                ...msg,
+                iv: data.iv,
+                decryptedMessage: data.decryptedMessage,
+                edited: true,
+              }
+            : msg
+        )
+      );
+    });
+    return () => socket.off("message_edited");
+  }, []);
+
+  const handleEditBtnClick = () => {
+    setIsEdit(true);
   };
 
   const handleClick = () => {
     setShowMenu(false);
   };
 
+  const onSend = () => {
+    socket.emit("edit_message", { msgObj, editMsg });
+
+    setIsEdit(false);
+  };
+
   return (
     <div
       className={`w-full flex  justify-${
-        msg.sender === userID ? "end" : "start"
+        msgObj.sender === userID ? "end" : "start"
       } `}
       onClick={handleClick}
     >
@@ -25,14 +54,45 @@ function MsgBubble({ msg, userID }) {
         className=" relative p-3 rounded-xl max-w-[70%] min-w-[50px] break-words flex flex-col justify-center  border border-black m-[5px] "
         onContextMenu={handleContextMenu}
       >
-        <p className="text-xs">{msg.sender !== userID && msg.sender}</p>
+        <p className="text-xs">{msgObj.sender !== userID && msgObj.sender}</p>
 
-        <p>{msg.decryptedMessage}</p>
-        <div className="min-w-[80px] flex justify-end">
-          <p className="text-xs">
-            {dayjs(msg.sentAt).format("DD/MM/YY hh:mm A")}
-          </p>
-        </div>
+        {!isEdit ? (
+          <>
+            <p>{msgObj.decryptedMessage}</p>
+            <div className="min-w-[80px] flex justify-end text-xs gap-2">
+              {msgObj.edited && <p>Edited</p>}
+              <p>{dayjs(msgObj.sentAt).format("DD/MM/YY hh:mm A")}</p>
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col justify-center items-center gap-[10px]">
+            <textarea
+              value={editMsg}
+              type="text"
+              onChange={(e) => {
+                setEditMsg(e.target.value);
+              }}
+              className=" resize-none focus:outline-none w-[95%] p-1 border border-gray-300"
+            />
+            <div className="flex flex-row justify-center gap-12">
+              <button
+                className=" w-[100px] border border-black rounded-lg"
+                onClick={() => {
+                  setIsEdit(false);
+                  setEditMsg(msgObj.decryptedMessage);
+                }}
+              >
+                Cancle
+              </button>
+              <button
+                onClick={onSend}
+                className=" w-[100px] border border-black rounded-lg"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        )}
 
         {showMenu && (
           <div>
@@ -43,15 +103,18 @@ function MsgBubble({ msg, userID }) {
 
             <div
               className={`absolute ${
-                msg.sender === userID ? "right-full mr-2" : "left-full ml-2"
+                msgObj.sender === userID ? "right-full mr-2" : "left-full ml-2"
               } top-0 ml-2 bg-white border border-black rounded-lg w-32 z-50`}
             >
               <ul className="p-2 space-y-1 text-sm">
                 <li className="hover:bg-gray-100 p-1 rounded cursor-pointer">
                   Reply
                 </li>
-                {msg.sender === userID && (
-                  <li className="hover:bg-gray-100 p-1 rounded cursor-pointer">
+                {msgObj.sender === userID && (
+                  <li
+                    className="hover:bg-gray-100 p-1 rounded cursor-pointer"
+                    onClick={handleEditBtnClick}
+                  >
                     Edit
                   </li>
                 )}

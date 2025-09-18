@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { io } from "socket.io-client";
 
-const socket = io("http://localhost:8000");
+import socket from "../SocketConfig";
 
 function ChatBox({ children, messages, setMessages, userID }) {
   const [msg, setMsg] = useState("");

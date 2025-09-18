@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import ChatBox from "./ChatBox";
 import MsgBubble from "./MsgBubble";
 import fetchMsg from "./fetchMsg";
+
 function Home() {
   const token = Cookies.get("jwt");
   const userID = jwtDecode(token).id;
@@ -21,7 +22,7 @@ function Home() {
     <div className="h-screen w-screen flex  justify-center items-center">
       <ChatBox messages={messages} setMessages={setMessages} userID={userID}>
         {messages.map((msg) => (
-          <MsgBubble msg={msg} userID={userID} />
+          <MsgBubble msgObj={msg} setMessages={setMessages} userID={userID} />
         ))}
       </ChatBox>
     </div>
