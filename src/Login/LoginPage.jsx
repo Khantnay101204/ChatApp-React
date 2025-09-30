@@ -45,7 +45,7 @@ function Login() {
 
   return (
     <div className=" h-screen w-screen flex  justify-center items-center">
-      <div className="flex flex-col h-80 w-1/3 border border-black justify-center items-center rounded-xl ">
+      <div className="flex flex-col h-80 w-[500px] border border-black justify-center items-center rounded-xl ">
         <input
           className="border border-black h-10 w-5/6 rounded-lg m-2 p-2"
           type="text"

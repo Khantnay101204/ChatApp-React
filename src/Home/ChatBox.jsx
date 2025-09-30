@@ -35,7 +35,7 @@ function ChatBox({ children, messages, setMessages, userID }) {
     setMsg("");
   };
   return (
-    <div className="border border-black h-2/3 w-1/3 rounded-xl flex flex-col">
+    <div className="border border-black h-2/3 w-[500px] rounded-xl flex flex-col">
       <div
         ref={containerRef}
         className="border border-black h-[90%] w-full rounded-t-xl overflow-auto"
