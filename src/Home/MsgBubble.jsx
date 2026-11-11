@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import socket from "../SocketConfig";
+import fetchUsername from "../Home/fetchUsername";
 
 function MsgBubble({ msgObj, userID, setMessages }) {
   const [showMenu, setShowMenu] = useState(false);
@@ -22,8 +23,8 @@ function MsgBubble({ msgObj, userID, setMessages }) {
                 decryptedMessage: data.decryptedMessage,
                 edited: true,
               }
-            : msg
-        )
+            : msg,
+        ),
       );
     });
     return () => socket.off("message_edited");
@@ -42,6 +43,13 @@ function MsgBubble({ msgObj, userID, setMessages }) {
 
     setIsEdit(false);
   };
+  const [senderName, setSenderName] = useState("Loading...");
+
+  useEffect(() => {
+    if (msgObj.sender !== userID) {
+      fetchUsername(msgObj.sender, setSenderName);
+    }
+  }, [msgObj.sender, userID]);
 
   return (
     <div
@@ -54,7 +62,7 @@ function MsgBubble({ msgObj, userID, setMessages }) {
         className=" relative p-3 rounded-xl max-w-[70%] min-w-[50px] break-words flex flex-col justify-center  border border-black m-[5px] "
         onContextMenu={handleContextMenu}
       >
-        <p className="text-xs">{msgObj.sender !== userID && msgObj.sender}</p>
+        <p className="text-xs">{msgObj.sender !== userID && senderName}</p>
 
         {!isEdit ? (
           <>
