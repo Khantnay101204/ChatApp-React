@@ -2,14 +2,14 @@ import React, { useEffect, useState } from "react";
 import { fetchInboxChats, searchUsers, getCurrentUserId } from "./chatApi";
 import ChatBox from "./ChatBox";
 import GroupModal from "./GroupModal";
-import "./ChatUI.css";
 import socket from "../SocketConfig";
+import "./ChatUI.css";
 
 export default function HomePage() {
   const currentUserId = getCurrentUserId();
   const [chats, setChats] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
-  const [pendingRecipient, setPendingRecipient] = useState(null); // For first-time 1-on-1 DMs
+  const [pendingRecipient, setPendingRecipient] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [showGroupModal, setShowGroupModal] = useState(false);
@@ -22,24 +22,71 @@ export default function HomePage() {
       console.error("Failed to load inbox:", err.message);
     }
   };
+
+  useEffect(() => {
+    loadInbox();
+  }, []);
+
+  // Socket.IO personal room setup + instant inbox & group updates
   useEffect(() => {
     if (!currentUserId) return;
 
-    socket.emit("setup", currentUserId);
+    const joinPersonalRoom = () => {
+      socket.emit("setup", currentUserId);
+    };
+
+    joinPersonalRoom();
+    socket.on("connect", joinPersonalRoom);
 
     const handleInboxUpdate = () => {
       loadInbox();
     };
 
+    const handleGroupUpdated = (updatedChat) => {
+      setChats((prev) =>
+        prev.map((c) =>
+          String(c._id) === String(updatedChat._id) ? updatedChat : c,
+        ),
+      );
+      setSelectedChat((prev) =>
+        String(prev?._id) === String(updatedChat._id) ? updatedChat : prev,
+      );
+    };
+
+    // Group appears immediately in the added user's inbox (without toast popup)
+    const handleAddedToGroup = (newGroup) => {
+      if (!newGroup?._id) return;
+      setChats((prev) => {
+        const exists = prev.some((c) => String(c._id) === String(newGroup._id));
+        return exists
+          ? prev.map((c) =>
+              String(c._id) === String(newGroup._id) ? newGroup : c,
+            )
+          : [newGroup, ...prev];
+      });
+    };
+
+    // Group disappears immediately from the removed/left user's inbox & closes if open
+    const handleRemovedFromGroup = ({ chatId }) => {
+      setChats((prev) => prev.filter((c) => String(c._id) !== String(chatId)));
+      setSelectedChat((prev) =>
+        String(prev?._id) === String(chatId) ? null : prev,
+      );
+    };
+
     socket.on("inbox updated", handleInboxUpdate);
+    socket.on("group updated", handleGroupUpdated);
+    socket.on("added to group", handleAddedToGroup);
+    socket.on("removed from group", handleRemovedFromGroup);
+
     return () => {
+      socket.off("connect", joinPersonalRoom);
       socket.off("inbox updated", handleInboxUpdate);
+      socket.off("group updated", handleGroupUpdated);
+      socket.off("added to group", handleAddedToGroup);
+      socket.off("removed from group", handleRemovedFromGroup);
     };
   }, [currentUserId]);
-
-  useEffect(() => {
-    loadInbox();
-  }, []);
 
   // Search users by name/email
   useEffect(() => {
@@ -59,28 +106,28 @@ export default function HomePage() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Helper to resolve display name for 1-on-1 vs Group chat
   const getChatTitle = (chat) => {
     if (chat.isGroupChat) return chat.chatName;
-    const otherUser = chat.users?.find((u) => u._id !== currentUserId);
+    const otherUser = chat.users?.find(
+      (u) => String(u._id) !== String(currentUserId),
+    );
     return otherUser ? otherUser.name : "Direct Message";
   };
 
-  // Start or open a 1-on-1 chat from search results
   const handleSelectSearchedUser = (user) => {
     setSearchTerm("");
     setSearchResults([]);
 
-    // Check if a 1-on-1 chat with this user already exists in inbox
     const existing = chats.find(
-      (c) => !c.isGroupChat && c.users.some((u) => u._id === user._id),
+      (c) =>
+        !c.isGroupChat &&
+        c.users.some((u) => String(u._id) === String(user._id)),
     );
 
     if (existing) {
       setPendingRecipient(null);
       setSelectedChat(existing);
     } else {
-      // Telegram-style: No DB chat created until the first message is sent
       setSelectedChat(null);
       setPendingRecipient(user);
     }
@@ -98,6 +145,27 @@ export default function HomePage() {
 
   return (
     <div className="chat-app-container">
+      {/* Hidden SVG filter for hand-drawn pencil border */}
+      <svg
+        style={{ position: "absolute", width: 0, height: 0 }}
+        aria-hidden="true"
+      >
+        <filter id="pencil-sketch">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.035"
+            numOctaves="3"
+            result="noise"
+          />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="noise"
+            scale="2.5"
+            xChannelSelector="R"
+            yChannelSelector="G"
+          />
+        </filter>
+      </svg>
       {/* Left Sidebar */}
       <aside className="chat-sidebar">
         <div className="sidebar-header">
@@ -119,7 +187,6 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Search Dropdown */}
         {searchResults.length > 0 && (
           <div className="search-results-box">
             <div className="section-label">Start New Chat</div>
@@ -139,7 +206,6 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Active Inbox List */}
         <div className="chat-list">
           {chats.map((chat) => {
             const isActive = selectedChat?._id === chat._id;
@@ -190,11 +256,17 @@ export default function HomePage() {
             onFirstMessageCreated={handleFirstMessageCreated}
             onChatUpdated={(updatedChat) => {
               setSelectedChat(updatedChat);
-              loadInbox();
+              setChats((prev) =>
+                prev.map((c) =>
+                  String(c._id) === String(updatedChat._id) ? updatedChat : c,
+                ),
+              );
             }}
-            onLeaveGroup={() => {
+            onLeaveGroup={(leftChatId) => {
               setSelectedChat(null);
-              loadInbox();
+              setChats((prev) =>
+                prev.filter((c) => String(c._id) !== String(leftChatId)),
+              );
             }}
           />
         ) : (
@@ -204,7 +276,6 @@ export default function HomePage() {
         )}
       </main>
 
-      {/* Group Creation Modal */}
       {showGroupModal && (
         <GroupModal
           onClose={() => setShowGroupModal(false)}

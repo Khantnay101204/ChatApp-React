@@ -1,17 +1,79 @@
+/* Main Outer White Box with Rounded Corners & Black Border */
 .chat-app-container {
   display: flex;
-  height: 100vh;
+  max-width: 1100px;
+  height: calc(100vh - 48px);
+  margin: 24px auto;
+  background: #ffffff;
+  border: 2px solid #1a1a1a;
+  border-width: 2px 2.5px 2.5px 2px;
+  border-radius: 22px 14px 20px 16px / 16px 22px 14px 20px;
+  box-shadow: 3px 3px 0px #1a1a1a;
+  overflow: hidden;
   font-family:
     system-ui,
     -apple-system,
     sans-serif;
-  background: #f4f6f9;
+  color: #1a1a1a;
+  box-sizing: border-box;
+}
+@import url("https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap");
+
+/* Apply handwritten font & soft graphite texture across the whole app */
+.chat-app-container {
+  font-family: "Patrick Hand", cursive, sans-serif;
+  color: #1f1f1f;
+  text-shadow: 0.35px 0.35px 0px rgba(31, 31, 31, 0.25);
+  letter-spacing: 0.02em;
 }
 
+/* Inputs and buttons do not inherit fonts by default in browsers */
+.chat-app-container input,
+.chat-app-container button {
+  font-family: inherit;
+  color: #1f1f1f;
+  letter-spacing: 0.02em;
+}
+
+/* Slightly larger sizes so handwritten strokes stay crisp */
+.sidebar-header h2,
+.chatbox-header h3,
+.modal-card h3 {
+  font-size: 22px;
+}
+
+.chat-title {
+  font-size: 17px;
+}
+
+.msg-text,
+.sidebar-search input,
+.message-input-bar input,
+.modal-card input,
+.drawer-row input,
+.drawer-section input {
+  font-size: 16px;
+}
+
+.btn-primary,
+.btn-secondary {
+  font-size: 15px;
+}
+
+.chat-sub,
+.system-announcement {
+  font-size: 14px;
+}
+
+.chat-app-container * {
+  box-sizing: border-box;
+}
+
+/* Left Sidebar */
 .chat-sidebar {
-  width: 320px;
+  width: 300px;
   background: #ffffff;
-  border-right: 1px solid #e2e8f0;
+  border-right: 2px solid #000000;
   display: flex;
   flex-direction: column;
 }
@@ -21,23 +83,63 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 2px solid #000000;
+}
+
+.sidebar-header h2,
+.chatbox-header h3,
+.modal-card h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .sidebar-search {
   padding: 12px 16px;
+  border-bottom: 1.5px solid #000000;
 }
 
+/* Inputs */
 .sidebar-search input,
 .modal-card input,
 .drawer-row input,
-.drawer-section input {
+.drawer-section input,
+.edit-form input {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  box-sizing: border-box;
-  margin-bottom: 8px;
+  padding: 9px 12px;
+  background: #ffffff;
+  color: #000000;
+  border: 1.5px solid #000000;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+}
+
+.modal-card input,
+.drawer-section input {
+  margin-bottom: 10px;
+}
+
+.sidebar-search input::placeholder,
+.message-input-bar input::placeholder,
+.modal-card input::placeholder,
+.group-drawer input::placeholder {
+  color: #666666;
+}
+
+/* Search Results & Chat List */
+.search-results-box {
+  border-bottom: 2px solid #000000;
+  background: #fafafa;
+}
+
+.section-label {
+  padding: 6px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid #000000;
 }
 
 .chat-list {
@@ -51,28 +153,41 @@
   gap: 12px;
   padding: 12px 16px;
   cursor: pointer;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #e0e0e0;
+  background: #ffffff;
 }
 
-.chat-list-item:hover,
+.chat-list-item:hover {
+  background: #f5f5f5;
+}
+
 .chat-list-item.active {
-  background: #eff6ff;
+  background: #efefef;
+  border-left: 4px solid #000000;
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background: #2563eb;
-  color: #fff;
+  background: #ffffff;
+  color: #000000;
+  border: 1.5px solid #000000;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.chat-meta {
+  min-width: 0;
+  flex: 1;
 }
 
 .chat-title {
   font-weight: 600;
+  font-size: 14px;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -80,21 +195,28 @@
 
 .chat-sub {
   font-size: 12px;
-  color: #64748b;
+  color: #555555;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .badge {
   font-size: 10px;
-  background: #dbeafe;
-  color: #1d4ed8;
-  padding: 2px 6px;
+  font-weight: 600;
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #000000;
+  padding: 1px 6px;
   border-radius: 999px;
 }
 
+/* Right Main Chat Area */
 .chat-main {
   flex: 1;
   display: flex;
   flex-direction: column;
+  background: #ffffff;
 }
 
 .chatbox-wrapper {
@@ -106,21 +228,47 @@
 .chatbox-header {
   padding: 14px 20px;
   background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 2px solid #000000;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
+/* Group Settings Drawer */
 .group-drawer {
-  background: #f8fafc;
-  padding: 12px 20px;
-  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  padding: 14px 20px;
+  border-bottom: 2px solid #000000;
 }
 
 .drawer-row {
   display: flex;
   gap: 8px;
+  margin-bottom: 10px;
+}
+
+.member-chip,
+.dropdown-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  background: #ffffff;
+  border: 1px solid #000000;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.member-chip button {
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #000000;
+  border-radius: 6px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-weight: 600;
 }
 
 .drawer-members,
@@ -128,19 +276,33 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .member-tag {
-  background: #e2e8f0;
-  padding: 4px 10px;
+  background: #ffffff;
+  color: #000000;
+  border: 1.5px solid #000000;
+  padding: 3px 10px;
   border-radius: 999px;
   font-size: 12px;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
+.member-tag button,
+.remove-btn {
+  background: none;
+  border: none;
+  color: #000000;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 2px;
+}
+
+/* Message Feed & White Rounded Bubbles */
 .messages-feed {
   flex: 1;
   padding: 20px;
@@ -148,6 +310,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  background: #ffffff;
 }
 
 .msg-row {
@@ -161,21 +324,29 @@
 .msg-bubble {
   max-width: 65%;
   padding: 10px 14px;
-  border-radius: 14px;
   background: #ffffff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  color: #1a1a1a;
+  border: 1.8px solid #1a1a1a;
+  border-width: 1.5px 2px 2px 1.8px;
+  border-radius: 18px 10px 16px 12px / 12px 18px 10px 16px;
 }
 
 .msg-row.own .msg-bubble {
-  background: #2563eb;
-  color: #ffffff;
+  background: #f7f7f7;
+  box-shadow: 2px 2px 0px #1a1a1a;
 }
 
 .msg-sender {
   font-size: 11px;
   font-weight: 700;
   margin-bottom: 4px;
-  color: #2563eb;
+  color: #000000;
+}
+
+.msg-text {
+  font-size: 14px;
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 .msg-footer {
@@ -183,74 +354,124 @@
   justify-content: flex-end;
   gap: 8px;
   font-size: 10px;
-  opacity: 0.8;
+  color: #555555;
   margin-top: 4px;
 }
 
 .edit-link {
   background: none;
   border: none;
-  color: inherit;
+  color: #000000;
   text-decoration: underline;
   cursor: pointer;
   font-size: 10px;
   padding: 0;
 }
 
+.edit-form {
+  display: flex;
+  gap: 6px;
+}
+
+.edit-form button {
+  background: #ffffff;
+  color: #000000;
+  border: 1.5px solid #000000;
+  border-radius: 8px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* Bottom Message Input Bar */
 .message-input-bar {
   display: flex;
   gap: 10px;
   padding: 14px 20px;
   background: #ffffff;
-  border-top: 1px solid #e2e8f0;
+  border-top: 2px solid #000000;
 }
 
 .message-input-bar input {
   flex: 1;
   padding: 10px 14px;
-  border: 1px solid #cbd5e1;
-  border-radius: 999px;
+  background: #ffffff;
+  color: #000000;
+  border: 1.5px solid #000000;
+  border-radius: 12px;
+  font-size: 14px;
+  outline: none;
 }
 
+/* Minimalist Monochrome Buttons */
 .btn-primary {
-  background: #2563eb;
-  color: #ffffff;
-  border: none;
+  background: #ffffff;
+  color: #000000;
+  border: 1.5px solid #000000;
   padding: 8px 14px;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.btn-primary:hover {
+  background: #000000;
+  color: #ffffff;
 }
 
 .btn-secondary {
-  background: #e2e8f0;
-  color: #1e293b;
-  border: none;
+  background: #ffffff;
+  color: #000000;
+  border: 1.5px solid #000000;
   padding: 8px 14px;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.btn-secondary:hover {
+  background: #f0f0f0;
 }
 
 .empty-state {
   margin: auto;
-  color: #64748b;
+  color: #555555;
+  font-size: 14px;
 }
 
+/* Group Creation Modal */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.45);
+  background: rgba(255, 255, 255, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 50;
 }
 
 .modal-card {
   background: #ffffff;
+  border: 2px solid #000000;
+  border-radius: 16px;
   padding: 24px;
-  border-radius: 12px;
   width: 400px;
   max-width: 90%;
+}
+
+.modal-card h3 {
+  margin-bottom: 14px;
+}
+
+.error-banner {
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  border: 1.5px solid #000000;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .modal-actions {
@@ -258,4 +479,257 @@
   justify-content: flex-end;
   gap: 8px;
   margin-top: 16px;
+}
+.toast-banner {
+  position: fixed;
+  top: 16px;
+  right: 24px;
+  z-index: 100;
+  background: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.system-announcement {
+  align-self: center;
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #000000;
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  margin: 4px 0;
+  text-align: center;
+}
+
+.sidebar-search input,
+.message-input-bar input,
+.modal-card input,
+.drawer-row input,
+.drawer-section input,
+.btn-primary,
+.btn-secondary {
+  border: 1.8px solid #1a1a1a;
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+}
+.btn-primary:hover {
+  background: #1a1a1a;
+  color: #ffffff;
+  box-shadow: 2px 2px 0px #555555;
+}
+
+.chat-app-container,
+.msg-bubble,
+.modal-card {
+  position: relative;
+  border: none;
+}
+
+.chat-app-container::before,
+.msg-bubble::before,
+.modal-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 2px solid #1f1f1f;
+  border-radius: inherit;
+  filter: url(#pencil-sketch);
+  pointer-events: none;
+}
+/* Headings */
+.sidebar-header h2,
+.chatbox-header h3,
+.modal-card h3 {
+  font-size: 26px;
+}
+
+/* Sidebar chat titles & avatars */
+.chat-title {
+  font-size: 20px;
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  font-size: 19px;
+}
+
+/* Message text & inputs */
+.msg-text,
+.sidebar-search input,
+.message-input-bar input,
+.modal-card input,
+.drawer-row input,
+.drawer-section input,
+.edit-form input {
+  font-size: 19px;
+}
+
+/* Buttons */
+.btn-primary,
+.btn-secondary {
+  font-size: 18px;
+}
+
+/* Subtitles, system announcements & empty states */
+.chat-sub,
+.system-announcement,
+.empty-state,
+.member-chip,
+.dropdown-item {
+  font-size: 16px;
+}
+
+/* Group sender names & member tags */
+.msg-sender,
+.member-tag {
+  font-size: 15px;
+}
+
+/* Timestamps, edit links & badges */
+.msg-footer,
+.edit-link,
+.badge,
+.section-label {
+  font-size: 13px;
+}
+/* Search Results Section */
+.search-results-box {
+  border-bottom: 2px solid #1f1f1f;
+  background: #fafafa;
+  padding-bottom: 6px;
+}
+
+.section-label {
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #1f1f1f;
+  border-bottom: 1.5px dashed #1f1f1f;
+}
+
+/* Scrollable Inbox List */
+.chat-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 0;
+  background: #ffffff;
+}
+
+/* Individual Sketchy Chat Cards */
+.chat-list-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  background: #ffffff;
+  color: #1f1f1f;
+  border: none;
+  border-radius: 18px 10px 16px 12px / 12px 18px 10px 16px;
+  transition:
+    transform 0.1s ease,
+    background 0.15s ease;
+}
+
+.chat-list-item::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1.8px solid #1f1f1f;
+  border-radius: inherit;
+  filter: url(#pencil-sketch);
+  pointer-events: none;
+}
+
+.chat-list-item:hover {
+  background: #f7f7f7;
+  transform: translate(-1px, -1px);
+}
+
+.chat-list-item.active {
+  background: #f0f0f0;
+  box-shadow: 2.5px 2.5px 0px #1f1f1f;
+}
+
+/* Hand-Drawn Avatar Circle */
+.avatar {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 52% 48% 50% 50% / 48% 52% 48% 52%;
+  background: #ffffff;
+  color: #1f1f1f;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.avatar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1.8px solid #1f1f1f;
+  border-radius: inherit;
+  filter: url(#pencil-sketch);
+  pointer-events: none;
+}
+
+/* Chat Title, Subtitle & Group Badge */
+.chat-meta {
+  min-width: 0;
+  flex: 1;
+}
+
+.chat-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f1f1f;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-sub {
+  font-size: 16px;
+  color: #4a4a4a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge {
+  position: relative;
+  font-size: 13px;
+  font-weight: 600;
+  background: #ffffff;
+  color: #1f1f1f;
+  border: none;
+  padding: 1px 8px;
+  border-radius: 12px 8px 10px 9px / 9px 11px 8px 12px;
+}
+
+.badge::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1.4px solid #1f1f1f;
+  border-radius: inherit;
+  filter: url(#pencil-sketch);
+  pointer-events: none;
 }

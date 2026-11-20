@@ -31,11 +31,14 @@ export default function ChatBox({
 
   const isGroupAdmin =
     chat?.isGroupChat &&
-    (chat.groupAdmin?._id || chat.groupAdmin) === currentUserId;
+    String(chat.groupAdmin?._id || chat.groupAdmin) === String(currentUserId);
 
   // 1. Join Socket.IO room and load decrypted message history when active chat changes
   useEffect(() => {
     setShowGroupInfo(false);
+    setNewGroupName("");
+    setMemberSearch("");
+    setMemberResults([]);
 
     if (!chat?._id) {
       setMessages([]);
@@ -51,10 +54,10 @@ export default function ChatBox({
       .finally(() => setLoading(false));
   }, [chat?._id]);
 
-  // 2. Listen for incoming real-time messages and inline edits in the active room
+  // 2. Listen for incoming real-time messages, inline edits, and group updates
   useEffect(() => {
     const handleIncomingMessage = ({ chat: incomingChat, message }) => {
-      if (incomingChat?._id === chat?._id) {
+      if (String(incomingChat?._id) === String(chat?._id)) {
         setMessages((prev) => {
           if (prev.some((m) => m.id === message.id)) return prev;
           return [...prev, message];
@@ -63,7 +66,7 @@ export default function ChatBox({
     };
 
     const handleEditedMessage = ({ chatId, messageId, updatedText }) => {
-      if (chatId === chat?._id) {
+      if (String(chatId) === String(chat?._id)) {
         setMessages((prev) =>
           prev.map((m) =>
             m.id === messageId
@@ -74,14 +77,22 @@ export default function ChatBox({
       }
     };
 
+    const handleGroupUpdated = (updatedChat) => {
+      if (String(updatedChat?._id) === String(chat?._id)) {
+        onChatUpdated(updatedChat);
+      }
+    };
+
     socket.on("message received", handleIncomingMessage);
     socket.on("message edited", handleEditedMessage);
+    socket.on("group updated", handleGroupUpdated);
 
     return () => {
       socket.off("message received", handleIncomingMessage);
       socket.off("message edited", handleEditedMessage);
+      socket.off("group updated", handleGroupUpdated);
     };
-  }, [chat?._id]);
+  }, [chat?._id, onChatUpdated]);
 
   // 3. Auto-scroll to the latest message
   useEffect(() => {
@@ -164,25 +175,31 @@ export default function ChatBox({
     }
   };
 
-  // 6. Group Admin: Rename group
+  // 6. Group Admin Only: Rename group and broadcast live
   const handleRenameGroup = async () => {
-    if (!newGroupName.trim()) return;
+    if (!isGroupAdmin || !newGroupName.trim()) return;
     try {
-      const res = await renameGroupChat(chat._id, newGroupName);
-      onChatUpdated(res.data.chat);
+      const res = await renameGroupChat(chat._id, newGroupName.trim());
+      const updatedChat = res.data.chat;
+      onChatUpdated(updatedChat);
+      socket.emit("group renamed", updatedChat);
       setNewGroupName("");
     } catch (err) {
       alert(err.message);
     }
   };
 
-  // 7. Group Admin: Search & add member
+  // 7. Group Admin Only: Search & add member
   const handleSearchMember = async (q) => {
     setMemberSearch(q);
     if (!q.trim()) return setMemberResults([]);
     try {
       const res = await searchUsers(q);
-      setMemberResults(res.data.users || []);
+      const existingIds = new Set(chat?.users?.map((u) => String(u._id)));
+      const filtered = (res.data.users || []).filter(
+        (u) => !existingIds.has(String(u._id)),
+      );
+      setMemberResults(filtered);
     } catch (err) {
       console.error("Member search failed:", err.message);
     }
@@ -192,21 +209,35 @@ export default function ChatBox({
     try {
       const res = await addUserToGroup(chat._id, userId);
       onChatUpdated(res.data.chat);
+
+      if (res.data.systemMessage) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === res.data.systemMessage.id)) return prev;
+          return [...prev, res.data.systemMessage];
+        });
+      }
+
       setMemberSearch("");
       setMemberResults([]);
     } catch (err) {
       alert(err.message);
     }
   };
-
   // 8. Group Admin / Self: Remove member or leave group
   const handleRemoveMember = async (userId) => {
     try {
       const res = await removeUserFromGroup(chat._id, userId);
-      if (userId === currentUserId) {
-        onLeaveGroup();
+      if (String(userId) === String(currentUserId)) {
+        onLeaveGroup(chat._id);
       } else {
         onChatUpdated(res.data.chat);
+        if (res.data.systemMessage) {
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === res.data.systemMessage.id))
+              return prev;
+            return [...prev, res.data.systemMessage];
+          });
+        }
       }
     } catch (err) {
       alert(err.message);
@@ -216,8 +247,8 @@ export default function ChatBox({
   // Resolve sender display name in group chats
   const getSenderName = (sender) => {
     const senderId = typeof sender === "object" ? sender._id : sender;
-    if (senderId === currentUserId) return "You";
-    const found = chat?.users?.find((u) => u._id === senderId);
+    if (String(senderId) === String(currentUserId)) return "You";
+    const found = chat?.users?.find((u) => String(u._id) === String(senderId));
     return found ? found.name : "User";
   };
 
@@ -247,34 +278,43 @@ export default function ChatBox({
       {/* Group Settings Drawer */}
       {showGroupInfo && chat?.isGroupChat && (
         <div className="group-drawer">
-          <div className="drawer-row">
-            <input
-              type="text"
-              placeholder="New group name..."
-              value={newGroupName}
-              onChange={(e) => setNewGroupName(e.target.value)}
-            />
-            <button className="btn-primary" onClick={handleRenameGroup}>
-              Rename
-            </button>
-          </div>
+          {isGroupAdmin ? (
+            <>
+              <div className="drawer-row">
+                <input
+                  type="text"
+                  placeholder="New group name..."
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                />
+                <button className="btn-primary" onClick={handleRenameGroup}>
+                  Rename
+                </button>
+              </div>
 
-          {isGroupAdmin && (
-            <div className="drawer-section">
-              <input
-                type="text"
-                placeholder="Add member by name..."
-                value={memberSearch}
-                onChange={(e) => handleSearchMember(e.target.value)}
-              />
-              {memberResults.map((u) => (
-                <div key={u._id} className="member-chip">
-                  <span>{u.name}</span>
-                  <button type="button" onClick={() => handleAddMember(u._id)}>
-                    + Add
-                  </button>
-                </div>
-              ))}
+              <div className="drawer-section">
+                <input
+                  type="text"
+                  placeholder="Add member by name..."
+                  value={memberSearch}
+                  onChange={(e) => handleSearchMember(e.target.value)}
+                />
+                {memberResults.map((u) => (
+                  <div key={u._id} className="member-chip">
+                    <span>{u.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleAddMember(u._id)}
+                    >
+                      + Add
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="chat-sub" style={{ marginBottom: "8px" }}>
+              Group Admin: <strong>{chat.groupAdmin?.name || "Admin"}</strong>
             </div>
           )}
 
@@ -282,13 +322,15 @@ export default function ChatBox({
             {chat.users.map((u) => (
               <span key={u._id} className="member-tag">
                 {u.name}
-                {(isGroupAdmin || u._id === currentUserId) && (
+                {(isGroupAdmin || String(u._id) === String(currentUserId)) && (
                   <button
                     type="button"
                     className="remove-btn"
                     onClick={() => handleRemoveMember(u._id)}
                     title={
-                      u._id === currentUserId ? "Leave group" : "Remove member"
+                      String(u._id) === String(currentUserId)
+                        ? "Leave group"
+                        : "Remove member"
                     }
                   >
                     ×
@@ -301,6 +343,7 @@ export default function ChatBox({
       )}
 
       {/* Message Feed */}
+      {/* Message Feed */}
       <div className="messages-feed">
         {loading ? (
           <p className="empty-state">Decrypting messages...</p>
@@ -310,9 +353,17 @@ export default function ChatBox({
           </p>
         ) : (
           messages.map((msg) => {
+            if (msg.isSystem) {
+              return (
+                <div key={msg.id} className="system-announcement">
+                  {msg.decryptedMessage}
+                </div>
+              );
+            }
+
             const senderId =
               typeof msg.sender === "object" ? msg.sender._id : msg.sender;
-            const isOwn = senderId === currentUserId;
+            const isOwn = String(senderId) === String(currentUserId);
             return (
               <MsgBubble
                 key={msg.id}
